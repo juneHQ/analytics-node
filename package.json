@@ -1,7 +1,9 @@
 {
   "name": "@june-so/analytics-node",
-  "version": "6.1.1",
+  "version": "6.2.0",
   "description": "The hassle-free way to integrate analytics into any Node.js application",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "license": "MIT",
   "repository": "@june-so/analytics-node",
   "author": {
@@ -12,17 +14,18 @@
     "node": ">=4"
   },
   "scripts": {
-    "circle-lint": ".buildscript/circle.sh",
-    "dependencies": "yarn",
-    "test": "standard && nyc ava --timeout=20s&& .buildscript/e2e.sh",
-    "coverage": "nyc npm run test",
-    "report-coverage": "nyc report --reporter=lcov > coverage.lcov && codecov",
-    "np": "np --no-publish",
-    "release": "yarn run np"
+    "build": "tsc",
+    "lint": "eslint . --ext .ts",
+    "test": "jest",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm test && npm run lint",
+    "preversion": "npm run lint",
+    "version": "git add -A src",
+    "postversion": "git push && git push --tags",
+    "check-updates": "npx npm-check-updates",
+    "check-updates:minor": "npx npm-check-updates --target minor",
+    "check-updates:patch": "npx npm-check-updates --target patch"
   },
-  "files": [
-    "index.js"
-  ],
   "keywords": [
     "analytics",
     "stats",
@@ -32,35 +35,25 @@
     "client",
     "driver"
   ],
-  "dependencies": {
-    "@segment/loosely-validate-event": "^2.0.0",
-    "axios": "^0.27.2",
-    "axios-retry": "3.2.0",
-    "lodash.isstring": "^4.0.1",
-    "md5": "^2.2.1",
-    "ms": "^2.0.0",
-    "remove-trailing-slash": "^0.1.0",
-    "uuid": "^8.3.2"
-  },
   "devDependencies": {
-    "ava": "^0.25.0",
-    "basic-auth": "^2.0.1",
-    "body-parser": "^1.17.1",
-    "codecov": "^3.8.1",
-    "commander": "^2.9.0",
-    "delay": "^4.2.0",
-    "express": "^4.15.2",
-    "husky": "^3.0.4",
-    "np": "^7.5.0",
-    "nyc": "^15.1.0",
-    "sinon": "^7.3.2",
-    "snyk": "^1.171.1",
-    "standard": "^12.0.1"
+    "@types/analytics-node": "^3.1.11",
+    "@types/jest": "^29.4.0",
+    "@types/node": "^20.4.0",
+    "@typescript-eslint/eslint-plugin": "^5.51.0",
+    "@typescript-eslint/parser": "^5.51.0",
+    "ansi-regex": ">=6.0.1",
+    "eslint": "^8.33.0",
+    "eslint-config-prettier": "^8.6.0",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.1.1",
+    "jest": "^29.4.1",
+    "prettier": "^3.0.0",
+    "ts-jest": "^29.0.5",
+    "typescript": "^4.9.5"
   },
-  "resolutions": {
-    "kind-of": "^6.0.3",
-    "lodash": "^4.17.19",
-    "set-value": "^2.0.1",
-    "yargs-parser": "^13.1.2"
+  "dependencies": {
+    "analytics-node": "^6.2.0"
   }
 }
