@@ -13,7 +13,7 @@ export class Analytics {
 
   constructor(writeKey: string, opts?: AnalyticsOptions) {
     if (!writeKey?.length || typeof writeKey !== "string") {
-      throw new Error("You must pass your June project's write key.");
+      throw new Error("You must pass your June workspace's write key.");
     }
 
     const options = opts ?? {};

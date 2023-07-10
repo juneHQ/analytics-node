@@ -14,7 +14,7 @@ describe("Client", () => {
     // given
     // then
     expect(() => new Analytics(undefined as any)).toThrowError(
-      "You must pass your June project's write key."
+      "You must pass your June workspace's write key."
     );
   });
 
