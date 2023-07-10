@@ -1,6 +1,6 @@
 {
   "name": "@june-so/analytics-node",
-  "version": "7.0.0",
+  "version": "7.0.1",
   "description": "The hassle-free way to integrate analytics into any Node.js application",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

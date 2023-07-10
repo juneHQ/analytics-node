@@ -5,13 +5,13 @@
 To install the June SDK in your Node.js project, use the npm package manager:
 
 ```sh
-npm install @june-so/node-sdk --save
+npm install @june-so/analytics-node --save
 ```
 
 Alternatively, use yarn:
 
 ```sh
-yarn add @june-so/node-sdk
+yarn add @june-so/analytics-node
 ```
 
 ## Configuration
@@ -19,7 +19,7 @@ yarn add @june-so/node-sdk
 First, you'll need to import the SDK into your application:
 
 ```js
-import { Analytics } from '@june-so/node-sdk';
+import { Analytics } from '@june-so/analytics-node';
 ```
 
 Next, instantiate the client using the write key you've received when you created your June account:
