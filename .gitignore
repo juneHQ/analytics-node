@@ -3,3 +3,6 @@ coverage
 .nyc_output
 coverage.lcov
 /lib
+yarn.lock
+package-lock.json
+.idea

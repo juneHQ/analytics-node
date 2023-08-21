@@ -1,5 +1,12 @@
-import axios from "axios";
+import { FetchHTTPClient } from "@segment/analytics-node";
 import { Analytics } from "../client";
+
+const extractData = (fetchAction: jest.Mock, i = 0) => {
+  const [url, request] = fetchAction.mock.calls[i];
+  const { body } = request as any;
+  const { batch } = JSON.parse(body);
+  return { url, batch };
+};
 
 describe("Client", () => {
   it("should be able to create a new instance", () => {
@@ -14,7 +21,7 @@ describe("Client", () => {
     // given
     // then
     expect(() => new Analytics(undefined as any)).toThrowError(
-      "You must pass your June workspace's write key."
+      "You must pass your June workspace's write key.",
     );
   });
 
@@ -22,18 +29,17 @@ describe("Client", () => {
     // given
     // then
     expect(() => new Analytics({} as any)).toThrowError(
-      "You must pass your June workspace's write key."
+      "You must pass your June workspace's write key.",
     );
   });
 
   it("should track events and send it to api.june.so/sdk/batch", async () => {
     // given
-    const axiosInstance = axios.create();
-    axiosInstance.post = jest.fn().mockResolvedValue({ data: {} });
+    const fetchAction = jest.fn().mockResolvedValue({ status: 200 });
 
     const analytics = new Analytics("writeKey", {
-      flushAt: 1,
-      axiosInstance: axiosInstance,
+      maxEventsInBatch: 1,
+      httpClient: new FetchHTTPClient(fetchAction),
     });
 
     // when
@@ -45,34 +51,31 @@ describe("Client", () => {
       },
     });
 
+    await analytics.closeAndFlush();
+
     // then
-    expect(axiosInstance.post).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.post).toHaveBeenCalledWith(
-      "https://api.june.so/sdk/batch",
-      expect.objectContaining({
-        batch: expect.arrayContaining([
-          expect.objectContaining({
-            type: "track",
-            userId: "userId",
-            event: "event",
-            properties: {
-              property: "property",
-            },
-          }),
-        ]),
-      }),
-      expect.anything()
-    );
+    expect(fetchAction).toHaveBeenCalledTimes(1);
+
+    const { url, batch } = extractData(fetchAction);
+
+    expect(url).toBe("https://api.june.so/sdk/batch");
+    expect(batch).toHaveLength(1);
+    expect(batch[0]).toMatchObject({
+      type: "track",
+      userId: "userId",
+      properties: {
+        property: "property",
+      },
+    });
   });
 
   it("should identify and send it to api.june.so/sdk/batch", async () => {
     // given
-    const axiosInstance = axios.create();
-    axiosInstance.post = jest.fn().mockResolvedValue({ data: {} });
+    const fetchAction = jest.fn().mockResolvedValue({ status: 200 });
 
     const analytics = new Analytics("writeKey", {
-      flushAt: 1,
-      axiosInstance: axiosInstance,
+      maxEventsInBatch: 1,
+      httpClient: new FetchHTTPClient(fetchAction),
     });
 
     // when
@@ -83,33 +86,31 @@ describe("Client", () => {
       },
     });
 
+    await analytics.closeAndFlush();
+
     // then
-    expect(axiosInstance.post).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.post).toHaveBeenCalledWith(
-      "https://api.june.so/sdk/batch",
-      expect.objectContaining({
-        batch: expect.arrayContaining([
-          expect.objectContaining({
-            type: "identify",
-            userId: "userId",
-            traits: {
-              property: "property",
-            },
-          }),
-        ]),
-      }),
-      expect.anything()
-    );
+    expect(fetchAction).toHaveBeenCalledTimes(1);
+
+    const { url, batch } = extractData(fetchAction);
+
+    expect(url).toBe("https://api.june.so/sdk/batch");
+    expect(batch).toHaveLength(1);
+    expect(batch[0]).toMatchObject({
+      type: "identify",
+      userId: "userId",
+      traits: {
+        property: "property",
+      },
+    });
   });
 
   it("should group and send it to api.june.so/sdk/batch", async () => {
     // given
-    const axiosInstance = axios.create();
-    axiosInstance.post = jest.fn().mockResolvedValue({ data: {} });
+    const fetchAction = jest.fn().mockResolvedValue({ status: 200 });
 
     const analytics = new Analytics("writeKey", {
-      flushAt: 1,
-      axiosInstance: axiosInstance,
+      maxEventsInBatch: 1,
+      httpClient: new FetchHTTPClient(fetchAction),
     });
 
     // when
@@ -121,34 +122,31 @@ describe("Client", () => {
       },
     });
 
+    await analytics.closeAndFlush();
+
     // then
-    expect(axiosInstance.post).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.post).toHaveBeenCalledWith(
-      "https://api.june.so/sdk/batch",
-      expect.objectContaining({
-        batch: expect.arrayContaining([
-          expect.objectContaining({
-            type: "group",
-            groupId: "groupId",
-            userId: "userId",
-            traits: {
-              property: "property",
-            },
-          }),
-        ]),
-      }),
-      expect.anything()
-    );
+    expect(fetchAction).toHaveBeenCalledTimes(1);
+
+    const { url, batch } = extractData(fetchAction);
+
+    expect(url).toBe("https://api.june.so/sdk/batch");
+    expect(batch).toHaveLength(1);
+    expect(batch[0]).toMatchObject({
+      type: "group",
+      groupId: "groupId",
+      userId: "userId",
+      traits: {
+        property: "property",
+      },
+    });
   });
 
   it("should flush events and send it to api.june.so/sdk/batch", async () => {
     // given
-    const axiosInstance = axios.create();
-    axiosInstance.post = jest.fn().mockResolvedValue({ data: {} });
+    const fetchAction = jest.fn().mockResolvedValue({ status: 200 });
 
     const analytics = new Analytics("writeKey", {
-      flushAt: 1,
-      axiosInstance: axiosInstance,
+      httpClient: new FetchHTTPClient(fetchAction),
     });
 
     // when
@@ -159,30 +157,23 @@ describe("Client", () => {
         properties: {
           property: "property",
         },
-      })
+      }),
     );
-    await new Promise((resolve, reject) => {
-      analytics.flush((err, cb) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(cb);
-        }
-      });
-    });
+    await analytics.closeAndFlush();
 
     // then
-    expect(axiosInstance.post).toHaveBeenCalledTimes(10);
+    expect(fetchAction).toHaveBeenCalledTimes(1);
+    const { url, batch } = extractData(fetchAction);
+    expect(url).toBe("https://api.june.so/sdk/batch");
+    expect(batch).toHaveLength(10);
   });
 
   it("should send different event names", async () => {
     // given
-    const axiosInstance = axios.create();
-    axiosInstance.post = jest.fn().mockResolvedValue({ data: {} });
+    const fetchAction = jest.fn().mockResolvedValue({ status: 200 });
 
     const analytics = new Analytics("writeKey", {
-      flushAt: 1,
-      axiosInstance: axiosInstance,
+      httpClient: new FetchHTTPClient(fetchAction),
     });
 
     // when
@@ -201,41 +192,198 @@ describe("Client", () => {
       },
     });
 
+    await analytics.closeAndFlush();
+
     // then
-    expect(axiosInstance.post).toHaveBeenCalledTimes(2);
-    expect(axiosInstance.post).toHaveBeenNthCalledWith(
-      1,
-      "https://api.june.so/sdk/batch",
-      expect.objectContaining({
-        batch: expect.arrayContaining([
-          expect.objectContaining({
-            type: "track",
-            userId: "userId",
-            event: "event",
-            properties: {
-              property: "property",
-            },
-          }),
-        ]),
-      }),
-      expect.anything()
+    expect(fetchAction).toHaveBeenCalledTimes(1);
+    const { url, batch } = extractData(fetchAction);
+
+    expect(url).toBe("https://api.june.so/sdk/batch");
+    expect(batch).toHaveLength(2);
+
+    expect(batch[0]).toMatchObject({
+      type: "track",
+      userId: "userId",
+      event: "event",
+      properties: {
+        property: "property",
+      },
+    });
+
+    expect(batch[1]).toMatchObject({
+      type: "track",
+      userId: "userId",
+      event: "event2",
+      properties: {
+        property: "property",
+      },
+    });
+  });
+
+  it("should retry failed calls", async () => {
+    // given
+    const fetchAction = jest
+      .fn()
+      .mockResolvedValueOnce({ status: 500 })
+      .mockResolvedValueOnce({ status: 200 });
+
+    const analytics = new Analytics("writeKey", {
+      httpClient: new FetchHTTPClient(fetchAction),
+    });
+
+    // when
+    analytics.track({
+      userId: "userId",
+      event: "event",
+      properties: {
+        property: "property",
+      },
+    });
+
+    await analytics.closeAndFlush();
+
+    // then
+    expect(fetchAction).toHaveBeenCalledTimes(2);
+    const { url, batch } = extractData(fetchAction, 1);
+
+    expect(url).toBe("https://api.june.so/sdk/batch");
+    expect(batch).toHaveLength(1);
+    expect(batch[0]).toMatchObject({
+      type: "track",
+      userId: "userId",
+      properties: {
+        property: "property",
+      },
+    });
+  });
+
+  it("should retry to maxRetries if not successful", async () => {
+    // given
+    const fetchAction = jest.fn().mockResolvedValue({ status: 500 });
+
+    const analytics = new Analytics("writeKey", {
+      maxRetries: 3,
+      httpClient: new FetchHTTPClient(fetchAction),
+    });
+
+    // when
+    analytics.track({
+      userId: "userId",
+      event: "event",
+      properties: {
+        property: "property",
+      },
+    });
+
+    await analytics.closeAndFlush();
+
+    // then
+    expect(fetchAction).toHaveBeenCalledTimes(4);
+    const { url, batch } = extractData(fetchAction, 3);
+
+    expect(url).toBe("https://api.june.so/sdk/batch");
+    expect(batch).toHaveLength(1);
+    expect(batch[0]).toMatchObject({
+      type: "track",
+      userId: "userId",
+      properties: {
+        property: "property",
+      },
+    });
+  });
+
+  it("should call callback function on success", async () => {
+    // given
+    const fetchAction = jest.fn().mockResolvedValue({ status: 200 });
+    const callback = jest.fn();
+
+    const analytics = new Analytics("writeKey", {
+      httpClient: new FetchHTTPClient(fetchAction),
+    });
+
+    // when
+    analytics.track(
+      {
+        userId: "userId",
+        event: "event",
+        properties: {
+          property: "property",
+        },
+      },
+      callback,
     );
-    expect(axiosInstance.post).toHaveBeenNthCalledWith(
-      2,
-      "https://api.june.so/sdk/batch",
+
+    await analytics.closeAndFlush();
+
+    // then
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(callback).toHaveBeenCalledWith(
+      undefined,
       expect.objectContaining({
-        batch: expect.arrayContaining([
-          expect.objectContaining({
-            type: "track",
-            userId: "userId",
-            event: "event2",
-            properties: {
-              property: "property",
-            },
-          }),
-        ]),
+        attempts: 1,
+        event: expect.objectContaining({
+          userId: "userId",
+          event: "event",
+          type: "track",
+        }),
       }),
-      expect.anything()
     );
+  });
+
+  it("should call callback function on failure", async () => {
+    // given
+    const fetchAction = jest.fn().mockResolvedValue({ status: 500 });
+    const callback = jest.fn();
+
+    const analytics = new Analytics("writeKey", {
+      httpClient: new FetchHTTPClient(fetchAction),
+    });
+
+    // when
+    analytics.track(
+      {
+        userId: "userId",
+        event: "event",
+        properties: {
+          property: "property",
+        },
+      },
+      callback,
+    );
+
+    await analytics.closeAndFlush();
+
+    // then
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(callback).toHaveBeenCalledWith(expect.any(Error), expect.anything());
+  });
+
+  it("should handle client throwing error", async () => {
+    // given
+    const error = new Error("some random failure");
+    const fetchAction = jest.fn().mockRejectedValue(error);
+    const callback = jest.fn();
+
+    const analytics = new Analytics("writeKey", {
+      httpClient: new FetchHTTPClient(fetchAction),
+    });
+
+    // when
+    analytics.track(
+      {
+        userId: "userId",
+        event: "event",
+        properties: {
+          property: "property",
+        },
+      },
+      callback,
+    );
+
+    await analytics.closeAndFlush();
+
+    // then
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(callback).toHaveBeenCalledWith(error, expect.anything());
   });
 });
