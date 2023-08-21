@@ -21,7 +21,7 @@ export class Analytics {
     const mergedOptions = {
       ...options,
       writeKey,
-      host: "https://api.june.co",
+      host: "https://api.june.so",
       path: "/sdk/batch",
     };
 
