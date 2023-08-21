@@ -1,117 +1,54 @@
-import AnalyticsNode from "analytics-node";
+import { Analytics as BaseAnalytics } from "@segment/analytics-node";
 import {
-  AnalyticsOptions,
-  AnyObject,
-  BaseAnalyticsOptions,
-  Data,
-  Identity,
-  Integrations
+  Callback,
+  GroupParams,
+  IdentifyParams,
+  PageParams,
+  Settings,
+  TrackParams,
 } from "./types";
 
 export class Analytics {
-  private readonly nodeAnalytics: AnalyticsNode;
+  private readonly nodeAnalytics: BaseAnalytics;
 
-  constructor(writeKey: string, opts?: AnalyticsOptions) {
-    if (!writeKey?.length || typeof writeKey !== "string") {
+  constructor(writeKey: string, opts?: Settings) {
+    if (!writeKey?.length) {
       throw new Error("You must pass your June workspace's write key.");
     }
 
     const options = opts ?? {};
-    const mergedOptions: BaseAnalyticsOptions = {
+
+    const mergedOptions = {
       ...options,
-      host: "https://api.june.so",
+      writeKey,
+      host: "https://api.june.co",
       path: "/sdk/batch",
     };
 
-    this.nodeAnalytics = new AnalyticsNode(writeKey, mergedOptions);
+    this.nodeAnalytics = new BaseAnalytics(mergedOptions);
   }
 
-  identify(
-    message: Identity & {
-      traits?: AnyObject;
-      timestamp?: Date;
-      context?: AnyObject;
-      integrations?: Integrations;
-    },
-    callback?: (err: Error) => void
-  ): Analytics {
-    this.nodeAnalytics.identify(message, callback);
-    return this;
+  identify(params: IdentifyParams, callback?: Callback): void {
+    this.nodeAnalytics.identify(params, callback);
   }
 
-  track(
-    message: Identity & {
-      event: string;
-      properties?: AnyObject;
-      timestamp?: Date;
-      context?: AnyObject;
-      integrations?: Integrations;
-    },
-    callback?: (err: Error) => void
-  ): Analytics {
-    this.nodeAnalytics.track(message, callback);
-    return this;
+  track(params: TrackParams, callback?: Callback): void {
+    this.nodeAnalytics.track(params, callback);
   }
 
-  page(
-    message: Identity & {
-      category?: string;
-      name?: string;
-      properties?: AnyObject;
-      timestamp?: Date;
-      context?: AnyObject;
-      integrations?: Integrations;
-      messageId?: string;
-    },
-    callback?: (err: Error) => void
-  ): Analytics {
-    this.nodeAnalytics.page(message, callback);
-    return this;
+  page(params: PageParams, callback?: Callback): void {
+    this.nodeAnalytics.page(params, callback);
   }
 
-  screen(
-    message: Identity & {
-      name?: string;
-      properties?: AnyObject;
-      timestamp?: Date;
-      context?: AnyObject;
-      integrations?: Integrations;
-    },
-    callback?: (err: Error) => void
-  ): Analytics {
-    this.nodeAnalytics.screen(message, callback);
-    return this;
+  screen(params: PageParams, callback?: Callback): void {
+    this.nodeAnalytics.screen(params, callback);
   }
 
-  alias(
-    message: Identity & {
-      previousId: string | number;
-      integrations?: Integrations;
-    },
-    callback?: (err: Error) => void
-  ): Analytics {
-    this.nodeAnalytics.alias(message, callback);
-    return this;
+  group(params: GroupParams, callback?: Callback): void {
+    this.nodeAnalytics.group(params, callback);
   }
 
-  group(
-    message: Identity & {
-      groupId: string | number;
-      traits?: AnyObject;
-      context?: AnyObject;
-      timestamp?: Date;
-      integrations?: Integrations;
-    },
-    callback?: (err: Error) => void
-  ): Analytics {
-    this.nodeAnalytics.group(message, callback);
-    return this;
-  }
-
-  flush(
-    callback?: (err: Error, data: Data) => void
-  ): Promise<{ batch: Array<unknown>; timestamp: string; sentAt: string }> {
-    // todo: fix batch type
-    return this.nodeAnalytics.flush(callback);
+  async closeAndFlush(timeout?: number): Promise<void> {
+    return this.nodeAnalytics.closeAndFlush({ timeout });
   }
 }
