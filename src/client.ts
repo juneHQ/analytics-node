@@ -11,7 +11,7 @@ import {
 export class Analytics {
   private readonly nodeAnalytics: BaseAnalytics;
 
-  constructor(writeKey: string, opts?: Settings) {
+  constructor(writeKey: string, opts?: Settings & { host?: string }) {
     if (!writeKey?.length) {
       throw new Error("You must pass your June workspace's write key.");
     }
@@ -21,7 +21,7 @@ export class Analytics {
     const mergedOptions = {
       ...options,
       writeKey,
-      host: "https://api.june.so",
+      host: options.host || "https://api.june.so",
       path: "/sdk/batch",
     };
 

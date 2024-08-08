@@ -33,6 +33,41 @@ describe("Client", () => {
     );
   });
 
+  it("should be able to create a new instance with custom host", async () => {
+    const fetchAction = jest.fn().mockResolvedValue({ status: 200 });
+
+    // given
+    const analytics = new Analytics("writeKey", {
+      host: "http://localhost:3000",
+      httpClient: new FetchHTTPClient(fetchAction),
+    });
+
+    // then
+    expect(analytics).toBeDefined();
+
+    analytics.track({
+      userId: "userId",
+      event: "event",
+      properties: {
+        property: "property",
+      },
+    });
+
+    await analytics.closeAndFlush();
+
+    const { url, batch } = extractData(fetchAction);
+
+    expect(url).toBe("http://localhost:3000/sdk/batch");
+    expect(batch).toHaveLength(1);
+    expect(batch[0]).toMatchObject({
+      type: "track",
+      userId: "userId",
+      properties: {
+        property: "property",
+      },
+    });
+  });
+
   it("should track events and send it to api.june.so/sdk/batch", async () => {
     // given
     const fetchAction = jest.fn().mockResolvedValue({ status: 200 });
